@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>风场系统模拟</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="container">
+        <canvas id="scene"></canvas>
+        <div id="controls-panel">
+            <h2>风场控制面板</h2>
+            <div class="control-group">
+                <h3>全局风场</h3>
+                <div class="control">
+                    <label for="global-wind-direction-x">X方向:</label>
+                    <input type="range" id="global-wind-direction-x" min="-1" max="1" step="0.1" value="0.2">
+                    <span id="global-wind-direction-x-value">0.2</span>
+                </div>
+                <div class="control">
+                    <label for="global-wind-direction-y">Y方向:</label>
+                    <input type="range" id="global-wind-direction-y" min="-1" max="1" step="0.1" value="0.1">
+                    <span id="global-wind-direction-y-value">0.1</span>
+                </div>
+                <div class="control">
+                    <label for="global-wind-direction-z">Z方向:</label>
+                    <input type="range" id="global-wind-direction-z" min="-1" max="1" step="0.1" value="0">
+                    <span id="global-wind-direction-z-value">0</span>
+                </div>
+                <div class="control">
+                    <label for="global-wind-strength">强度:</label>
+                    <input type="range" id="global-wind-strength" min="0" max="2" step="0.1" value="0.5">
+                    <span id="global-wind-strength-value">0.5</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <h3>点风场</h3>
+                <button id="add-point-wind">添加点风场</button>
+                <div id="point-wind-fields"></div>
+            </div>
+            <div class="control-group">
+                <h3>锥体风场</h3>
+                <button id="add-cone-wind">添加锥体风场</button>
+                <div id="cone-wind-fields"></div>
+            </div>
+            <div class="control-group">
+                <h3>螺旋风场</h3>
+                <button id="add-spiral-wind">添加螺旋风场</button>
+                <div id="spiral-wind-fields"></div>
+            </div>
+            <div class="control-group">
+                <h3>粒子设置</h3>
+                <div class="control">
+                    <label for="particle-count">粒子数量:</label>
+                    <input type="range" id="particle-count" min="1000" max="10000" step="1000" value="5000">
+                    <span id="particle-count-value">5000</span>
+                </div>
+                <div class="control">
+                    <label for="particle-size">粒子大小:</label>
+                    <input type="range" id="particle-size" min="0.1" max="2" step="0.1" value="0.5">
+                    <span id="particle-size-value">0.5</span>
+                </div>
+                <div class="control">
+                    <label for="particle-speed">粒子速度:</label>
+                    <input type="range" id="particle-speed" min="0.1" max="2" step="0.1" value="1">
+                    <span id="particle-speed-value">1</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Three.js库 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- 应用脚本 -->
+    <script src="js/windField.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/controls.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 
