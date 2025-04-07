@@ -137,7 +137,7 @@ class GlobalWindField extends WindField {
     const dir = this.direction.clone().normalize();
     const origin = new THREE.Vector3(0, 0, 0);
     const length = 5;
-    const hex = 0x00ffff;
+    const hex = 0xFFFF00; // 明亮的黄色
     
     // 增加箭头的头部大小，使其更明显
     const headLength = length * 0.3;
@@ -190,7 +190,7 @@ class PointWindField extends WindField {
   createVisualizer() {
     const geometry = new THREE.SphereGeometry(0.5, 16, 16);
     const material = new THREE.MeshBasicMaterial({ 
-      color: this.isOutward ? 0xff5722 : 0x2196f3,
+      color: 0xFFFF00, // 明亮的黄色
       transparent: true,
       opacity: 0.7
     });
@@ -200,7 +200,7 @@ class PointWindField extends WindField {
     // 添加辅助线表示风场影响范围
     const wireframe = new THREE.LineSegments(
       new THREE.WireframeGeometry(new THREE.SphereGeometry(1, 16, 8)),
-      new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 })
+      new THREE.LineBasicMaterial({ color: 0xFFFF00, transparent: true, opacity: 0.3 }) // 明亮的黄色
     );
     
     // 缩放线框以匹配maxDistance
@@ -227,7 +227,7 @@ class PointWindField extends WindField {
     
     // 更新球体颜色
     if (visualizer.children[0]) {
-      visualizer.children[0].material.color.set(this.isOutward ? 0xff5722 : 0x2196f3);
+      visualizer.children[0].material.color.set(0xFFFF00); // 明亮的黄色
       // 重置子对象的本地位置，确保它们在Group的原点
       visualizer.children[0].position.set(0, 0, 0);
     }
@@ -239,6 +239,7 @@ class PointWindField extends WindField {
         this.maxDistance,
         this.maxDistance
       );
+      visualizer.children[1].material.color.set(0xFFFF00); // 明亮的黄色
       // 重置子对象的本地位置，确保它们在Group的原点
       visualizer.children[1].position.set(0, 0, 0);
     }
@@ -307,7 +308,7 @@ class ConeWindField extends WindField {
     coneGeometry.translate(0, 0, height/2);
     
     const coneMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ff00, // 绿色
+      color: 0xFFFF00, // 明亮的黄色
       transparent: true,
       opacity: 0.35,
       wireframe: true
@@ -317,7 +318,7 @@ class ConeWindField extends WindField {
     
     // 创建一个球体表示风场起始点
     const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x4caf50 });
+    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFF00 }); // 明亮的黄色
     const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     
     group.add(cone);
@@ -345,9 +346,11 @@ class ConeWindField extends WindField {
     // 确保子对象位置正确
     if (visualizer.children[0]) {
       visualizer.children[0].position.set(0, 0, 0);
+      visualizer.children[0].material.color.set(0xFFFF00); // 明亮的黄色
     }
     if (visualizer.children[1]) {
       visualizer.children[1].position.set(0, 0, 0);
+      visualizer.children[1].material.color.set(0xFFFF00); // 明亮的黄色
     }
     
     // 更新锥体尺寸
@@ -454,7 +457,7 @@ class SpiralWindField extends WindField {
     const curve = new THREE.CatmullRomCurve3(this.generateSpiralPoints());
     const geometry = new THREE.TubeGeometry(curve, 100, 0.2, 8, false);
     const material = new THREE.MeshBasicMaterial({
-      color: 0x9c27b0,
+      color: 0xFFFF00, // 明亮的黄色
       transparent: true,
       opacity: 0.5
     });
@@ -468,9 +471,9 @@ class SpiralWindField extends WindField {
     cylinderGeometry.translate(0, height/2, 0);
     
     const cylinderMaterial = new THREE.MeshBasicMaterial({
-      color: 0x9c27b0,
+      color: 0xFFFF00, // 明亮的黄色
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.3,
       wireframe: true,
       side: THREE.DoubleSide
     });
@@ -500,11 +503,13 @@ class SpiralWindField extends WindField {
     
     visualizer.position.copy(this.position);
     
-    // 重置子对象的本地位置，确保它们在Group的原点
+    // 更新所有组件的颜色
     if (visualizer.children[0]) {
+      visualizer.children[0].material.color.set(0xFFFF00); // 明亮的黄色
       visualizer.children[0].position.set(0, 0, 0);
     }
     if (visualizer.children[1]) {
+      visualizer.children[1].material.color.set(0xFFFF00); // 明亮的黄色
       visualizer.children[1].position.set(0, 0, 0);
     }
     

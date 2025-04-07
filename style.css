@@ -92,17 +92,39 @@ button:hover {
   padding: 10px;
   margin: 10px 0;
   border-radius: 4px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+/* 选中状态的风场控制面板 */
+.field-control.selected {
+  background-color: rgba(60, 60, 60, 0.8);
+  border: 2px solid #FFFF00;
+  box-shadow: 0 0 8px rgba(255, 255, 0, 0.5);
 }
 
 .remove-btn {
   background-color: #e53935;
   padding: 4px 8px;
   font-size: 12px;
-  margin-left: auto;
+  margin-left: 5px;
 }
 
 .remove-btn:hover {
   background-color: #c62828;
+}
+
+/* 选择按钮样式 */
+.select-btn {
+  background-color: #4CAF50;
+  padding: 4px 8px;
+  font-size: 12px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.select-btn:hover {
+  background-color: #388E3C;
 }
 
 .field-header {

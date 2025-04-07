@@ -79,7 +79,7 @@ class ParticleSystem {
   }
   
   // 设置粒子数量
-  setCount(count) {
+  setParticleCount(count) {
     if (count === this.count) return;
     
     // 保存旧数据
@@ -122,19 +122,24 @@ class ParticleSystem {
   }
   
   // 设置粒子大小
-  setSize(size) {
+  setParticleSize(size) {
     this.size = size;
     this.material.size = size;
   }
   
   // 设置粒子速度
-  setSpeed(speed) {
+  setSpeedFactor(speed) {
     this.speed = speed;
   }
   
   // 添加风场
   addWindField(windField) {
     this.windFields.push(windField);
+  }
+  
+  // 根据ID获取风场
+  getWindFieldById(id) {
+    return this.windFields.find(field => field.id === id);
   }
   
   // 移除风场

@@ -16,12 +16,17 @@ class WindSystemApp {
     this.camera = null;
     this.renderer = null;
     this.controls = null;
+    this.transformControls = null; // 用于直接在场景中移动风场
     
     // 系统组件
     this.clock = null;
     this.particleSystem = null;
     this.globalWindField = null;
     this.uiControls = null;
+    
+    // 选中的风场对象
+    this.selectedWindField = null;
+    this.selectedWindFieldVisualizer = null;
     
     // 初始化应用
     this.init();
@@ -55,6 +60,29 @@ class WindSystemApp {
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
+    
+    // 创建变换控制器，用于移动风场
+    this.transformControls = new THREE.TransformControls(this.camera, this.renderer.domElement);
+    this.transformControls.setSize(0.8); // 稍微缩小控制手柄以免遮挡
+    this.transformControls.addEventListener('dragging-changed', (event) => {
+      // 当拖动开始或结束时，禁用或启用轨道控制器
+      this.controls.enabled = !event.value;
+      
+      // 如果处于拖动结束的状态，并且有选中的风场，更新UI界面上的位置数值
+      if (!event.value && this.selectedWindField) {
+        this.uiControls.updateWindFieldPositionUI(this.selectedWindField);
+      }
+    });
+    
+    // 在变换过程中，实时更新风场位置
+    this.transformControls.addEventListener('objectChange', () => {
+      if (this.selectedWindField && this.selectedWindFieldVisualizer) {
+        // 从变换控件获取位置并更新风场
+        this.selectedWindField.position.copy(this.selectedWindFieldVisualizer.position);
+      }
+    });
+    
+    this.scene.add(this.transformControls);
     
     // 添加环境光照
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -100,6 +128,42 @@ class WindSystemApp {
     
     const box = new THREE.Mesh(boxGeometry, boxMaterial);
     this.scene.add(box);
+  }
+  
+  // 选择风场并显示变换控制器
+  selectWindField(windField, visualizer) {
+    // 如果已经选择了这个风场，不需要做任何事情
+    if (this.selectedWindField === windField) return;
+    
+    this.selectedWindField = windField;
+    this.selectedWindFieldVisualizer = visualizer;
+    
+    // 将变换控制器附加到可视化对象上
+    if (visualizer) {
+      this.transformControls.attach(visualizer);
+    } else {
+      this.transformControls.detach();
+    }
+    
+    // 设置变换模式为位移
+    this.transformControls.setMode('translate');
+    
+    // 通知UI更新选中状态
+    if (this.uiControls) {
+      this.uiControls.updateSelectedWindField(windField);
+    }
+  }
+  
+  // 取消选择风场
+  deselectWindField() {
+    this.selectedWindField = null;
+    this.selectedWindFieldVisualizer = null;
+    this.transformControls.detach();
+    
+    // 通知UI更新选中状态
+    if (this.uiControls) {
+      this.uiControls.updateSelectedWindField(null);
+    }
   }
   
   // 窗口大小调整处理
@@ -162,6 +226,7 @@ class WindSystemApp {
     // 清理DOM引用
     this.renderer.domElement = null;
     this.controls.dispose();
+    this.transformControls.dispose();
   }
 }
 

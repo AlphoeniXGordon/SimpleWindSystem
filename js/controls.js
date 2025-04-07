@@ -6,6 +6,7 @@ class WindSystemControls {
   constructor(app) {
     this.app = app;
     this.windFieldVisualizers = new Map(); // 存储风场ID到可视化对象的映射
+    this.currentSelectedWindFieldId = null; // 当前选中的风场ID
     
     this.setupEventListeners();
   }
@@ -26,6 +27,15 @@ class WindSystemControls {
     
     // 粒子系统控制
     this.setupParticleControls();
+    
+    // 添加场景点击事件监听，用于取消选择
+    this.app.renderer.domElement.addEventListener('click', (event) => {
+      // 如果点击的是空白区域（即变换控件没有被点击），则取消选择
+      // 由于变换控件的事件会先触发，所以这里需要判断一下是否点击了变换控件
+      if (!event.defaultPrevented && this.app.selectedWindField) {
+        this.app.deselectWindField();
+      }
+    });
   }
   
   // 设置全局风场控制
@@ -162,8 +172,14 @@ class WindSystemControls {
     this.app.scene.add(visualizer);
     this.windFieldVisualizers.set(pointWind.id, visualizer);
     
+    // 设置可视化器可点击
+    this.makeVisualizerClickable(visualizer, pointWind);
+    
     // 添加控制UI
     this.createPointWindControls(pointWind);
+    
+    // 自动选中新添加的风场
+    this.app.selectWindField(pointWind, visualizer);
     
     // 打印确认消息，帮助调试
     console.log(`已添加点风场，ID: ${pointWind.id}, 方向: ${isOutward ? '向外' : '向内'}`);
@@ -195,6 +211,17 @@ class WindSystemControls {
     header.appendChild(removeBtn);
     
     fieldElement.appendChild(header);
+    
+    // 添加选择按钮
+    const selectBtn = document.createElement('button');
+    selectBtn.className = 'select-btn';
+    selectBtn.textContent = '选择';
+    selectBtn.addEventListener('click', () => {
+      const visualizer = this.windFieldVisualizers.get(pointWind.id);
+      this.app.selectWindField(pointWind, visualizer);
+    });
+    
+    fieldElement.appendChild(selectBtn);
     
     // 创建位置控制
     const posXControl = this.createRangeControl('X位置:', -50, 50, pointWind.position.x, (value) => {
@@ -251,7 +278,6 @@ class WindSystemControls {
     
     directionSelect.addEventListener('change', () => {
       pointWind.isOutward = directionSelect.value === 'outward';
-      title.textContent = pointWind.isOutward ? '向外点风场' : '向内点风场';
       const visualizer = this.windFieldVisualizers.get(pointWind.id);
       pointWind.updateVisualizer(visualizer);
     });
@@ -259,7 +285,6 @@ class WindSystemControls {
     directionControl.appendChild(directionLabel);
     directionControl.appendChild(directionSelect);
     
-    // 添加控制元素到容器
     fieldElement.appendChild(posXControl);
     fieldElement.appendChild(posYControl);
     fieldElement.appendChild(posZControl);
@@ -268,6 +293,16 @@ class WindSystemControls {
     fieldElement.appendChild(directionControl);
     
     container.appendChild(fieldElement);
+    
+    // 保存对滑块的引用，以便在选择风场时更新
+    fieldElement.posXInput = posXControl.querySelector('input');
+    fieldElement.posYInput = posYControl.querySelector('input');
+    fieldElement.posZInput = posZControl.querySelector('input');
+    fieldElement.posXValue = posXControl.querySelector('span');
+    fieldElement.posYValue = posYControl.querySelector('span');
+    fieldElement.posZValue = posZControl.querySelector('span');
+    
+    return fieldElement;
   }
   
   // 添加锥体风场
@@ -279,18 +314,17 @@ class WindSystemControls {
       (Math.random() - 0.5) * 30
     );
     
-    // 随机方向
+    // 生成随机方向
     const direction = new THREE.Vector3(
-      Math.random() - 0.5,
-      Math.random() - 0.5,
-      Math.random() - 0.5
+      Math.random() * 2 - 1,
+      Math.random() * 2 - 1,
+      Math.random() * 2 - 1
     ).normalize();
     
-    const strength = 20.0; // 大幅增加默认强度从2.5到20.0
-    const angle = Math.PI / 5; // 调整为36度，更合适的锥角
+    const strength = 3.0; // 增加默认强度
+    const angle = Math.PI / 6; // 30度的锥角
     
     const coneWind = new ConeWindField(position, direction, strength, angle);
-    coneWind.maxDistance = 25; // 增加最大影响距离从20到25
     this.app.particleSystem.addWindField(coneWind);
     
     // 创建并添加可视化
@@ -298,11 +332,16 @@ class WindSystemControls {
     this.app.scene.add(visualizer);
     this.windFieldVisualizers.set(coneWind.id, visualizer);
     
+    // 设置可视化器可点击
+    this.makeVisualizerClickable(visualizer, coneWind);
+    
     // 添加控制UI
     this.createConeWindControls(coneWind);
     
-    // 打印确认消息，帮助调试
-    console.log(`已添加锥体风场，ID: ${coneWind.id}, 方向: ${direction.x.toFixed(2)}, ${direction.y.toFixed(2)}, ${direction.z.toFixed(2)}`);
+    // 自动选中新添加的风场
+    this.app.selectWindField(coneWind, visualizer);
+    
+    console.log(`已添加锥体风场，ID: ${coneWind.id}`);
   }
   
   // 创建锥体风场的控制UI
@@ -331,6 +370,17 @@ class WindSystemControls {
     header.appendChild(removeBtn);
     
     fieldElement.appendChild(header);
+    
+    // 添加选择按钮
+    const selectBtn = document.createElement('button');
+    selectBtn.className = 'select-btn';
+    selectBtn.textContent = '选择';
+    selectBtn.addEventListener('click', () => {
+      const visualizer = this.windFieldVisualizers.get(coneWind.id);
+      this.app.selectWindField(coneWind, visualizer);
+    });
+    
+    fieldElement.appendChild(selectBtn);
     
     // 创建位置控制
     const posXControl = this.createRangeControl('X位置:', -50, 50, coneWind.position.x, (value) => {
@@ -378,9 +428,9 @@ class WindSystemControls {
       coneWind.strength = parseFloat(value);
     });
     
-    // 创建角度控制（弧度转换为度数显示）
-    const angleControl = this.createRangeControl('角度:', 5, 90, coneWind.angle * (180 / Math.PI), (value) => {
-      coneWind.angle = parseFloat(value) * (Math.PI / 180);
+    // 创建角度控制
+    const angleControl = this.createRangeControl('角度:', 0.1, Math.PI/2, coneWind.angle, (value) => {
+      coneWind.angle = parseFloat(value);
       const visualizer = this.windFieldVisualizers.get(coneWind.id);
       coneWind.updateVisualizer(visualizer);
     });
@@ -392,7 +442,6 @@ class WindSystemControls {
       coneWind.updateVisualizer(visualizer);
     });
     
-    // 添加控制元素到容器
     fieldElement.appendChild(posXControl);
     fieldElement.appendChild(posYControl);
     fieldElement.appendChild(posZControl);
@@ -404,6 +453,16 @@ class WindSystemControls {
     fieldElement.appendChild(rangeControl);
     
     container.appendChild(fieldElement);
+    
+    // 保存对滑块的引用，以便在选择风场时更新
+    fieldElement.posXInput = posXControl.querySelector('input');
+    fieldElement.posYInput = posYControl.querySelector('input');
+    fieldElement.posZInput = posZControl.querySelector('input');
+    fieldElement.posXValue = posXControl.querySelector('span');
+    fieldElement.posYValue = posYControl.querySelector('span');
+    fieldElement.posZValue = posZControl.querySelector('span');
+    
+    return fieldElement;
   }
   
   // 添加螺旋风场
@@ -411,18 +470,18 @@ class WindSystemControls {
     // 在场景中心附近随机生成一个螺旋风场
     const position = new THREE.Vector3(
       (Math.random() - 0.5) * 30,
-      -20, // 从底部开始
+      (Math.random() - 0.5) * 30,
       (Math.random() - 0.5) * 30
     );
     
-    // 默认向上
-    const direction = new THREE.Vector3(0, 1, 0);
+    // 默认垂直向上，但可以随机倾斜一些
+    const direction = new THREE.Vector3(
+      (Math.random() - 0.5) * 0.4,
+      1,
+      (Math.random() - 0.5) * 0.4
+    ).normalize();
     
-    const strength = 2.0;
-    const radius = 8.0;
-    const rotationSpeed = 1.0;
-    
-    const spiralWind = new SpiralWindField(position, direction, strength, radius, rotationSpeed);
+    const spiralWind = new SpiralWindField(position, direction, 2.0, 8, 1.5);
     this.app.particleSystem.addWindField(spiralWind);
     
     // 创建并添加可视化
@@ -430,8 +489,16 @@ class WindSystemControls {
     this.app.scene.add(visualizer);
     this.windFieldVisualizers.set(spiralWind.id, visualizer);
     
+    // 设置可视化器可点击
+    this.makeVisualizerClickable(visualizer, spiralWind);
+    
     // 添加控制UI
     this.createSpiralWindControls(spiralWind);
+    
+    // 自动选中新添加的风场
+    this.app.selectWindField(spiralWind, visualizer);
+    
+    console.log(`已添加螺旋风场，ID: ${spiralWind.id}`);
   }
   
   // 创建螺旋风场的控制UI
@@ -460,6 +527,17 @@ class WindSystemControls {
     header.appendChild(removeBtn);
     
     fieldElement.appendChild(header);
+    
+    // 添加选择按钮
+    const selectBtn = document.createElement('button');
+    selectBtn.className = 'select-btn';
+    selectBtn.textContent = '选择';
+    selectBtn.addEventListener('click', () => {
+      const visualizer = this.windFieldVisualizers.get(spiralWind.id);
+      this.app.selectWindField(spiralWind, visualizer);
+    });
+    
+    fieldElement.appendChild(selectBtn);
     
     // 创建位置控制
     const posXControl = this.createRangeControl('X位置:', -50, 50, spiralWind.position.x, (value) => {
@@ -507,16 +585,15 @@ class WindSystemControls {
     // 创建半径控制
     const radiusControl = this.createRangeControl('半径:', 1, 20, spiralWind.radius, (value) => {
       spiralWind.radius = parseFloat(value);
-      spiralWind.maxDistance = parseFloat(value); // 更新最大距离
+      spiralWind.maxDistance = spiralWind.radius; // 更新最大影响范围
       this.recreateSpiralVisualizer(spiralWind);
     });
     
     // 创建旋转速度控制
-    const rotationControl = this.createRangeControl('旋转速度:', 0.1, 3, spiralWind.rotationSpeed, (value) => {
+    const rotationControl = this.createRangeControl('旋转速度:', 0.1, 5, spiralWind.rotationSpeed, (value) => {
       spiralWind.rotationSpeed = parseFloat(value);
     });
     
-    // 添加控制元素到容器
     fieldElement.appendChild(posXControl);
     fieldElement.appendChild(posYControl);
     fieldElement.appendChild(posZControl);
@@ -528,32 +605,120 @@ class WindSystemControls {
     fieldElement.appendChild(rotationControl);
     
     container.appendChild(fieldElement);
+    
+    // 保存对滑块的引用，以便在选择风场时更新
+    fieldElement.posXInput = posXControl.querySelector('input');
+    fieldElement.posYInput = posYControl.querySelector('input');
+    fieldElement.posZInput = posZControl.querySelector('input');
+    fieldElement.posXValue = posXControl.querySelector('span');
+    fieldElement.posYValue = posYControl.querySelector('span');
+    fieldElement.posZValue = posZControl.querySelector('span');
+    
+    return fieldElement;
   }
   
-  // 重新创建螺旋风场的可视化
-  // 因为螺旋风场的可视化依赖于方向和半径，所以需要重建而不只是更新
+  // 重新创建螺旋风场可视化
   recreateSpiralVisualizer(spiralWind) {
+    // 从场景中移除旧的可视化
     const oldVisualizer = this.windFieldVisualizers.get(spiralWind.id);
-    
     if (oldVisualizer) {
       this.app.scene.remove(oldVisualizer);
     }
     
+    // 创建新的可视化
     const newVisualizer = spiralWind.createVisualizer();
     this.app.scene.add(newVisualizer);
+    
+    // 如果当前选中的是这个风场，则更新变换控制器
+    if (this.app.selectedWindField === spiralWind) {
+      this.app.selectWindField(spiralWind, newVisualizer);
+    }
+    
+    // 更新映射
     this.windFieldVisualizers.set(spiralWind.id, newVisualizer);
+    
+    // 设置可视化器可点击
+    this.makeVisualizerClickable(newVisualizer, spiralWind);
+  }
+  
+  // 使可视化器可点击，以便选择风场
+  makeVisualizerClickable(visualizer, windField) {
+    // 给可视化器的所有子对象添加用户数据
+    visualizer.userData.windFieldId = windField.id;
+    visualizer.userData.isWindFieldVisualizer = true;
+    
+    if (visualizer.children) {
+      visualizer.children.forEach(child => {
+        child.userData.windFieldId = windField.id;
+        child.userData.isWindFieldVisualizer = true;
+      });
+    }
+    
+    // 给可视化器添加点击事件
+    visualizer.traverse(object => {
+      if (object.isMesh) {
+        object.addEventListener('click', (event) => {
+          // 阻止事件冒泡，避免触发场景的点击事件
+          event.stopPropagation();
+          
+          // 选择风场
+          this.app.selectWindField(windField, visualizer);
+        });
+      }
+    });
+  }
+  
+  // 更新选中的风场UI状态
+  updateSelectedWindField(windField) {
+    const previousSelectedId = this.currentSelectedWindFieldId;
+    this.currentSelectedWindFieldId = windField ? windField.id : null;
+    
+    // 清除之前选中的风场的突出显示
+    if (previousSelectedId) {
+      const previousElement = document.querySelector(`[data-id="${previousSelectedId}"]`);
+      if (previousElement) {
+        previousElement.classList.remove('selected');
+      }
+    }
+    
+    // 突出显示新选中的风场
+    if (windField) {
+      const element = document.querySelector(`[data-id="${windField.id}"]`);
+      if (element) {
+        element.classList.add('selected');
+      }
+    }
+  }
+  
+  // 从变换控件更新风场位置到UI
+  updateWindFieldPositionUI(windField) {
+    if (!windField) return;
+    
+    const element = document.querySelector(`[data-id="${windField.id}"]`);
+    if (!element) return;
+    
+    // 更新位置滑块
+    if (element.posXInput) {
+      element.posXInput.value = windField.position.x;
+      element.posXValue.textContent = windField.position.x.toFixed(2);
+    }
+    
+    if (element.posYInput) {
+      element.posYInput.value = windField.position.y;
+      element.posYValue.textContent = windField.position.y.toFixed(2);
+    }
+    
+    if (element.posZInput) {
+      element.posZInput.value = windField.position.z;
+      element.posZValue.textContent = windField.position.z.toFixed(2);
+    }
   }
   
   // 移除风场
   removeWindField(id, containerId) {
-    // 从粒子系统中移除
-    this.app.particleSystem.removeWindField(id);
-    
-    // 从场景中移除可视化
-    const visualizer = this.windFieldVisualizers.get(id);
-    if (visualizer) {
-      this.app.scene.remove(visualizer);
-      this.windFieldVisualizers.delete(id);
+    // 如果正在被选中，先取消选择
+    if (this.app.selectedWindField && this.app.selectedWindField.id === id) {
+      this.app.deselectWindField();
     }
     
     // 从UI中移除
@@ -562,6 +727,19 @@ class WindSystemControls {
     if (element) {
       container.removeChild(element);
     }
+    
+    // 获取风场和可视化器
+    const windField = this.app.particleSystem.getWindFieldById(id);
+    const visualizer = this.windFieldVisualizers.get(id);
+    
+    // 从场景中移除可视化器
+    if (visualizer) {
+      this.app.scene.remove(visualizer);
+      this.windFieldVisualizers.delete(id);
+    }
+    
+    // 从粒子系统中移除风场
+    this.app.particleSystem.removeWindField(id);
   }
   
   // 设置粒子系统控制
@@ -572,24 +750,24 @@ class WindSystemControls {
     
     countInput.addEventListener('input', () => {
       const count = parseInt(countInput.value);
-      this.app.particleSystem.setCount(count);
+      this.app.particleSystem.setParticleCount(count);
       document.getElementById('particle-count-value').textContent = count;
     });
     
     sizeInput.addEventListener('input', () => {
       const size = parseFloat(sizeInput.value);
-      this.app.particleSystem.setSize(size);
+      this.app.particleSystem.setParticleSize(size);
       document.getElementById('particle-size-value').textContent = size;
     });
     
     speedInput.addEventListener('input', () => {
       const speed = parseFloat(speedInput.value);
-      this.app.particleSystem.setSpeed(speed);
+      this.app.particleSystem.setSpeedFactor(speed);
       document.getElementById('particle-speed-value').textContent = speed;
     });
   }
   
-  // 创建范围控制UI元素
+  // 创建滑块控件
   createRangeControl(label, min, max, value, onChange) {
     const control = document.createElement('div');
     control.className = 'control';
@@ -608,9 +786,9 @@ class WindSystemControls {
     valueDisplay.textContent = value.toFixed(2);
     
     input.addEventListener('input', () => {
-      const numValue = parseFloat(input.value);
-      valueDisplay.textContent = numValue.toFixed(2);
-      onChange(numValue);
+      const val = parseFloat(input.value);
+      valueDisplay.textContent = val.toFixed(2);
+      onChange(val);
     });
     
     control.appendChild(labelElement);
