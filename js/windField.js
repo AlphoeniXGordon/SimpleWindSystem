@@ -45,10 +45,91 @@ class GlobalWindField extends WindField {
     super(new THREE.Vector3(0, 0, 0), strength);
     this.direction = direction.normalize();
     this.maxDistance = Infinity; // 全局风场没有距离限制
+    
+    // 添加风向变化相关参数
+    this.baseDirection = this.direction.clone(); // 基础风向
+    this.noiseScale = 0.15; // 噪声强度比例
+    this.sinAmplitude = 0.2; // 正弦波振幅
+    this.sinFrequency = 0.5; // 正弦波频率 (Hz)
+    this.timeOffset = Math.random() * 1000; // 随机时间偏移，使每个风场变化不同
+    
+    // 用于噪声和时间变化的累积器
+    this.noiseTime = 0;
+    this.lastUpdateTime = Date.now() / 1000;
+    
+    // 噪声空间尺度
+    this.noiseSpaceScale = 0.05; // 空间尺度因子，数值越小，空间变化越平滑
   }
 
   calculateForce(particlePosition) {
-    return this.direction.clone().multiplyScalar(this.strength);
+    // 更新时间
+    const currentTime = Date.now() / 1000;
+    const deltaTime = currentTime - this.lastUpdateTime;
+    this.lastUpdateTime = currentTime;
+    this.noiseTime += deltaTime;
+    
+    // 获取基于正弦波的整体方向变化
+    // 这部分是全局的，影响整体风向的周期性变化
+    const sinTime = (this.noiseTime + this.timeOffset) * this.sinFrequency;
+    const sinOffsetX = Math.sin(sinTime) * this.sinAmplitude;
+    const sinOffsetY = Math.sin(sinTime * 1.3) * this.sinAmplitude;
+    const sinOffsetZ = Math.sin(sinTime * 0.7) * this.sinAmplitude;
+    
+    // 创建一个临时方向向量，从基础方向开始
+    const baseWindDirection = this.baseDirection.clone();
+    
+    // 添加正弦波变化到基础风向
+    baseWindDirection.x += sinOffsetX;
+    baseWindDirection.y += sinOffsetY;
+    baseWindDirection.z += sinOffsetZ;
+    baseWindDirection.normalize();
+    
+    // 保存当前基础风向（只包含正弦变化），用于可视化
+    this.direction.copy(baseWindDirection);
+    
+    // 如果没有启用噪声，直接返回基础风向
+    if (this.noiseScale <= 0) {
+      return baseWindDirection.clone().multiplyScalar(this.strength);
+    }
+    
+    // 基于粒子位置和时间计算噪声
+    // 使用简单的正弦组合模拟柏林噪声
+    // 对每个位置坐标使用不同频率的正弦，创造出空间相关的噪声场
+    const px = particlePosition.x * this.noiseSpaceScale;
+    const py = particlePosition.y * this.noiseSpaceScale;
+    const pz = particlePosition.z * this.noiseSpaceScale;
+    const time = this.noiseTime * 0.1; // 时间因子，影响噪声随时间的变化速度
+    
+    // 使用多组正弦叠加创建更自然的噪声
+    // X方向噪声
+    const noiseX = (
+      Math.sin(px * 1.7 + py * 2.3 + time * 0.5) * 0.5 +
+      Math.sin(py * 3.1 + pz * 1.9 + time * 0.7) * 0.25 +
+      Math.sin(pz * 2.5 + px * 1.3 + time * 0.9) * 0.25
+    ) * this.noiseScale;
+    
+    // Y方向噪声
+    const noiseY = (
+      Math.sin(py * 2.3 + pz * 1.7 + time * 0.6) * 0.5 +
+      Math.sin(pz * 1.9 + px * 3.1 + time * 0.8) * 0.25 +
+      Math.sin(px * 2.5 + py * 1.3 + time * 1.0) * 0.25
+    ) * this.noiseScale;
+    
+    // Z方向噪声
+    const noiseZ = (
+      Math.sin(pz * 1.7 + px * 2.3 + time * 0.7) * 0.5 +
+      Math.sin(px * 3.1 + py * 1.9 + time * 0.9) * 0.25 +
+      Math.sin(py * 2.5 + pz * 1.3 + time * 1.1) * 0.25
+    ) * this.noiseScale;
+    
+    // 创建噪声向量
+    const noiseVector = new THREE.Vector3(noiseX, noiseY, noiseZ);
+    
+    // 将噪声添加到基础风向
+    const finalDirection = baseWindDirection.clone().add(noiseVector).normalize();
+    
+    // 返回最终的风力向量
+    return finalDirection.multiplyScalar(this.strength);
   }
 
   createVisualizer() {
@@ -71,6 +152,7 @@ class GlobalWindField extends WindField {
   updateVisualizer(visualizer) {
     if (!visualizer) return;
     
+    // 使用当前实际风向更新可视化器
     visualizer.setDirection(this.direction.normalize());
     // 箭头长度与风场强度成正比
     const length = Math.min(5 + this.strength * 0.1, 15);

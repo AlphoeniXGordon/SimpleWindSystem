@@ -77,6 +77,42 @@ class WindSystemControls {
     
     // 修改全局风场强度的最大值
     strengthInput.max = "500";
+    
+    // 添加噪声和正弦波参数控制
+    this.addGlobalWindDynamicsControls();
+  }
+  
+  // 添加全局风场动态变化控制
+  addGlobalWindDynamicsControls() {
+    const container = document.getElementById('global-wind-controls');
+    
+    // 创建噪声强度控制
+    const noiseControl = this.createRangeControl('噪声强度:', 0, 0.5, this.app.globalWindField.noiseScale, (value) => {
+      this.app.globalWindField.noiseScale = parseFloat(value);
+    });
+    
+    // 创建噪声空间尺度控制
+    const noiseSpaceControl = this.createRangeControl('空间尺度:', 0.01, 0.2, this.app.globalWindField.noiseSpaceScale, (value) => {
+      this.app.globalWindField.noiseSpaceScale = parseFloat(value);
+    });
+    
+    // 创建正弦波振幅控制
+    const amplitudeControl = this.createRangeControl('波动振幅:', 0, 0.5, this.app.globalWindField.sinAmplitude, (value) => {
+      this.app.globalWindField.sinAmplitude = parseFloat(value);
+    });
+    
+    // 创建正弦波频率控制
+    const frequencyControl = this.createRangeControl('波动频率:', 0.1, 2, this.app.globalWindField.sinFrequency, (value) => {
+      this.app.globalWindField.sinFrequency = parseFloat(value);
+    });
+    
+    // 添加控制器到容器
+    container.appendChild(document.createElement('hr'));
+    container.appendChild(document.createElement('h3')).textContent = '动态效果';
+    container.appendChild(noiseControl);
+    container.appendChild(noiseSpaceControl);
+    container.appendChild(amplitudeControl);
+    container.appendChild(frequencyControl);
   }
   
   // 更新全局风场
@@ -94,7 +130,9 @@ class WindSystemControls {
     
     const strength = parseFloat(strengthInput.value);
     
-    this.app.globalWindField.direction.copy(direction.normalize());
+    // 更新基础方向和当前方向
+    this.app.globalWindField.baseDirection.copy(direction.normalize());
+    this.app.globalWindField.direction.copy(this.app.globalWindField.baseDirection);
     this.app.globalWindField.strength = strength;
     
     // 更新可视化

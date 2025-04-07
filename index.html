@@ -13,25 +13,27 @@
             <h2>风场控制面板</h2>
             <div class="control-group">
                 <h3>全局风场</h3>
-                <div class="control">
-                    <label for="global-wind-direction-x">X方向:</label>
-                    <input type="range" id="global-wind-direction-x" min="-1" max="1" step="0.1" value="0.2">
-                    <span id="global-wind-direction-x-value">0.2</span>
-                </div>
-                <div class="control">
-                    <label for="global-wind-direction-y">Y方向:</label>
-                    <input type="range" id="global-wind-direction-y" min="-1" max="1" step="0.1" value="0.1">
-                    <span id="global-wind-direction-y-value">0.1</span>
-                </div>
-                <div class="control">
-                    <label for="global-wind-direction-z">Z方向:</label>
-                    <input type="range" id="global-wind-direction-z" min="-1" max="1" step="0.1" value="0">
-                    <span id="global-wind-direction-z-value">0</span>
-                </div>
-                <div class="control">
-                    <label for="global-wind-strength">强度:</label>
-                    <input type="range" id="global-wind-strength" min="0" max="2" step="0.1" value="0.5">
-                    <span id="global-wind-strength-value">0.5</span>
+                <div id="global-wind-controls">
+                    <div class="control">
+                        <label for="global-wind-direction-x">X方向:</label>
+                        <input type="range" id="global-wind-direction-x" min="-1" max="1" step="0.1" value="0.2">
+                        <span id="global-wind-direction-x-value">0.2</span>
+                    </div>
+                    <div class="control">
+                        <label for="global-wind-direction-y">Y方向:</label>
+                        <input type="range" id="global-wind-direction-y" min="-1" max="1" step="0.1" value="0.1">
+                        <span id="global-wind-direction-y-value">0.1</span>
+                    </div>
+                    <div class="control">
+                        <label for="global-wind-direction-z">Z方向:</label>
+                        <input type="range" id="global-wind-direction-z" min="-1" max="1" step="0.1" value="0">
+                        <span id="global-wind-direction-z-value">0</span>
+                    </div>
+                    <div class="control">
+                        <label for="global-wind-strength">强度:</label>
+                        <input type="range" id="global-wind-strength" min="0" max="2" step="0.1" value="0.5">
+                        <span id="global-wind-strength-value">0.5</span>
+                    </div>
                 </div>
             </div>
             <div class="control-group">
